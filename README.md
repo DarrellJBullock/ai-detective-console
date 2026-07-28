@@ -6,6 +6,8 @@ Built as a portfolio project to demonstrate a full game loop, an LLM-ready AI ar
 
 > **Portfolio angle:** Built a console-style AI detective game with LLM-ready suspect interviews, evidence tracking, contradiction detection, save progress, timeline reconstruction, and a cinematic React interface.
 
+**Live demo:** [ai-detective-console.vercel.app](https://ai-detective-console.vercel.app)
+
 ## Screenshots
 
 _Add screenshots/GIFs here: Home menu, Case Board (red string), Interrogation Room (question wheel), Ending screen._
