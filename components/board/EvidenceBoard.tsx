@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/hooks/useGameStore";
-import { SUSPECTS } from "@/lib/game/suspects";
-import { EVIDENCE } from "@/lib/game/evidence";
-import { CONTRADICTION_RULES } from "@/lib/game/contradictions";
-import { TIMELINE_EVENTS } from "@/lib/game/timeline";
+import { getCase } from "@/lib/game/cases";
 import type { Evidence } from "@/lib/game/types";
 import { SuspectNode } from "./SuspectNode";
 import { EvidenceNode } from "./EvidenceNode";
@@ -18,6 +15,7 @@ import { GameBadge } from "@/components/ui/GameBadge";
 export function EvidenceBoard() {
   const router = useRouter();
   const progress = useGameStore((s) => s.progress);
+  const caseDef = getCase(progress.caseId);
   const containerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
@@ -37,7 +35,7 @@ export function EvidenceBoard() {
       if (!container) return;
       const containerRect = container.getBoundingClientRect();
 
-      const found = CONTRADICTION_RULES.filter((rule) =>
+      const found = caseDef.contradictions.filter((rule) =>
         progress.suspectStates[rule.suspectId]?.contradictionsFound.includes(rule.contradictionTag)
       );
 
@@ -64,7 +62,9 @@ export function EvidenceBoard() {
     recompute();
     window.addEventListener("resize", recompute);
     return () => window.removeEventListener("resize", recompute);
-  }, [progress.suspectStates]);
+    // caseDef is re-derived from progress.caseId each render; that id is already a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.suspectStates, progress.caseId]);
 
   return (
     <div ref={containerRef} className="relative flex flex-col gap-8">
@@ -73,7 +73,7 @@ export function EvidenceBoard() {
       <section>
         <h2 className="font-display mb-3 text-sm text-amber">Suspects</h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          {SUSPECTS.map((suspect) => (
+          {caseDef.suspects.map((suspect) => (
             <SuspectNode
               key={suspect.id}
               suspect={suspect}
@@ -87,7 +87,7 @@ export function EvidenceBoard() {
       <section>
         <h2 className="font-display mb-3 text-sm text-amber">Timeline Preview</h2>
         <div className="flex gap-3 overflow-x-auto pb-2">
-          {TIMELINE_EVENTS.map((event) => (
+          {caseDef.timeline.map((event) => (
             <TimelineNode key={event.id} event={event} />
           ))}
         </div>
@@ -104,7 +104,7 @@ export function EvidenceBoard() {
           </button>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {EVIDENCE.map((evidence) => (
+          {caseDef.evidence.map((evidence) => (
             <EvidenceNode
               key={evidence.id}
               evidence={evidence}

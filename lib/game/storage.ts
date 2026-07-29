@@ -1,7 +1,5 @@
 import type { CaseProgress, GameSettings, SaveFile, SuspectRuntimeState } from "./types";
-import { EVIDENCE } from "./evidence";
-import { SUSPECTS } from "./suspects";
-import { CASE_META } from "./caseData";
+import { DEFAULT_CASE_ID, getCase } from "./cases";
 
 export const SAVE_VERSION = 1;
 const SAVE_KEY = "ai-detective-console:save";
@@ -15,13 +13,15 @@ export const DEFAULT_SETTINGS: GameSettings = {
   gamepadEnabled: false,
 };
 
-export function createInitialProgress(): CaseProgress {
+export function createInitialProgress(caseId: string = DEFAULT_CASE_ID): CaseProgress {
+  const caseDef = getCase(caseId);
+
   const evidenceUnlocked = Object.fromEntries(
-    EVIDENCE.map((e) => [e.id, e.unlocked])
+    caseDef.evidence.map((e) => [e.id, e.unlocked])
   ) as CaseProgress["evidenceUnlocked"];
 
   const suspectStates = Object.fromEntries(
-    SUSPECTS.map((s) => [
+    caseDef.suspects.map((s) => [
       s.id,
       {
         stress: 10,
@@ -36,7 +36,7 @@ export function createInitialProgress(): CaseProgress {
   ) as unknown as CaseProgress["suspectStates"];
 
   return {
-    caseId: CASE_META.id,
+    caseId: caseDef.meta.id,
     startedAt: Date.now(),
     updatedAt: Date.now(),
     evidenceUnlocked,

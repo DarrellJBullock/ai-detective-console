@@ -4,7 +4,8 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import type { Evidence } from "@/lib/game/types";
 import { GameBadge } from "@/components/ui/GameBadge";
-import { SUSPECTS } from "@/lib/game/suspects";
+import { getCase } from "@/lib/game/cases";
+import { useGameStore } from "@/hooks/useGameStore";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export function EvidenceDetailDrawer({
@@ -15,6 +16,8 @@ export function EvidenceDetailDrawer({
   onClose: () => void;
 }) {
   const reducedMotion = useReducedMotion();
+  const caseId = useGameStore((s) => s.progress.caseId);
+  const suspects = getCase(caseId).suspects;
 
   return (
     <AnimatePresence>
@@ -69,7 +72,7 @@ export function EvidenceDetailDrawer({
                 <dd className="mt-1 flex flex-wrap gap-2">
                   {evidence.relatedSuspects.length === 0 && <span className="text-fog">None identified</span>}
                   {evidence.relatedSuspects.map((id) => {
-                    const suspect = SUSPECTS.find((s) => s.id === id);
+                    const suspect = suspects.find((s) => s.id === id);
                     if (!suspect) return null;
                     return (
                       <Link

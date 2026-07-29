@@ -16,18 +16,10 @@ interface MenuItem {
 export function MainMenu() {
   const router = useRouter();
   const hasSave = useGameStore((s) => s.hasSave);
-  const startNewCase = useGameStore((s) => s.startNewCase);
   const continueCase = useGameStore((s) => s.continueCase);
 
   const items: MenuItem[] = [
-    {
-      id: "new-case",
-      label: "New Case",
-      action: () => {
-        startNewCase();
-        router.push("/case/briefing");
-      },
-    },
+    { id: "new-case", label: "New Case", action: () => router.push("/cases") },
     {
       id: "continue",
       label: "Continue",
@@ -38,7 +30,7 @@ export function MainMenu() {
         router.push("/case/board");
       },
     },
-    { id: "case-files", label: "Case Files", action: () => router.push("/case/briefing") },
+    { id: "case-files", label: "Case Files", action: () => router.push("/cases") },
     { id: "evidence-room", label: "Evidence Room", disabled: !hasSave, action: () => router.push("/case/evidence") },
     { id: "settings", label: "Settings", action: () => router.push("/settings") },
   ];

@@ -1,7 +1,5 @@
-import type { QuestionCategory, SuspectId } from "@/lib/game/types";
-import { getSuspectById } from "@/lib/game/suspects";
-import { getContradictionForEvidence } from "@/lib/game/contradictions";
-import { getEvidenceById } from "@/lib/game/evidence";
+import type { QuestionCategory } from "@/lib/game/types";
+import { getSuspect, getContradiction, getEvidence } from "@/lib/game/cases";
 import { clamp } from "@/lib/utils";
 import type {
   AIProvider,
@@ -18,6 +16,7 @@ interface ResponseVariant {
 }
 
 const PRESET_RESPONSES: Record<string, ResponseVariant> = {
+  // --- The Midnight Ledger -------------------------------------------- //
   "lena-timeline": {
     calm: "I left my desk around ten-thirty. Most of the floor had already cleared out. I went to check on a deployment, then headed home.",
     defensive: "I already told you — desk, then home. Why does it matter minute by minute? I'm an engineer, not a suspect on a clock.",
@@ -90,9 +89,83 @@ const PRESET_RESPONSES: Record<string, ResponseVariant> = {
     calm: "I— I was trying to leave quickly that night. I didn't want to get pulled into anything.",
     defensive: "Please, I already feel like a target here. I didn't do anything wrong.",
   },
+
+  // --- The Last Commit --------------------------------------------------- //
+  "marcus-timeline": {
+    calm: "I stayed near the meeting room until it wrapped around eight, then went back to my desk to catch up on a backlog.",
+    defensive: "I've said this already — meeting, desk, work. I don't log my bathroom breaks, if that's what you're after.",
+  },
+  "marcus-relationship": {
+    calm: "Professional. Naomi trusted my judgment on anything technical — mostly.",
+    defensive: "It was fine, until she started talking about 'shared credit' on architecture I built.",
+  },
+  "marcus-motive": {
+    calm: "Naomi reviewed roadmaps, not who wrote what code. If she had concerns, she never raised them with me directly.",
+    defensive: "You think I'd hurt someone over a credit line in a slide deck? That's insulting.",
+  },
+  "marcus-alibi": {
+    calm: "I was at my desk. Ask anyone still in the office that night.",
+    defensive: "I don't have a witness for every minute of my evening, Detective. Most people don't.",
+  },
+  "marcus-evidence": {
+    calm: "I was heads-down on a client call all evening. I never left my desk.",
+    defensive: "I already told you — I didn't leave. Are we doing this again?",
+  },
+  "marcus-pressure": {
+    calm: "I don't respond well to accusations without proof, Detective.",
+    defensive: "Careful. I have counsel on retainer, and right now you have a calendar entry and a theory.",
+  },
+  "priya-timeline": {
+    calm: "I wrapped up my slides, answered a few investor questions, and left when the meeting broke at eight.",
+    defensive: "I've already told this story once. Meeting, questions, home. It doesn't change on the second telling.",
+  },
+  "priya-relationship": {
+    calm: "Naomi and I worked closely on positioning. We didn't always agree on how rosy to make the numbers look, but we respected each other.",
+    defensive: "We had our disagreements, sure. Every founder and product lead do. That's not a motive, that's Tuesday.",
+  },
+  "priya-motive": {
+    calm: "Naomi flagged a few metrics in the deck. Normal pre-pitch scrutiny. Nothing that couldn't be explained.",
+    defensive: "You're fishing. Every board deck has numbers that need context. That's not fraud, that's storytelling.",
+  },
+  "priya-alibi": {
+    calm: "My building has a doorman. I'm sure he'd remember me coming in.",
+    defensive: "What, you want a notarized statement? I went home. That's the truth.",
+  },
+  "priya-evidence": {
+    calm: "I haven't touched the metrics dashboard since the original draft, weeks ago.",
+    defensive: "I'm not going to explain our analytics pipeline to you like you're on the audit committee.",
+  },
+  "priya-pressure": {
+    calm: "I think you're reaching, Detective. I'd be careful about accusations you can't back up.",
+    defensive: "This conversation is over unless my lawyer is in the room.",
+  },
+  "daniel-timeline": {
+    calm: "I stayed for the full post-mortem, said my goodbyes around eight, and drove back to the city. Long night for everyone at that table.",
+    defensive: "I've walked you through this once. Meeting, car, home. Nothing about that story is negotiable.",
+  },
+  "daniel-relationship": {
+    calm: "Naomi and I talked more term sheets than small talk, if I'm honest. I respected how hard she pushed back — mine included.",
+    defensive: "We had the normal friction between a founder and her lead investor. That's not a motive, Detective, that's governance.",
+  },
+  "daniel-motive": {
+    calm: "She mentioned wanting to review some trading disclosures with the board. I assumed it was routine compliance.",
+    defensive: "You're reaching. Every investor on that cap table has positions that need context. That doesn't make me a killer.",
+  },
+  "daniel-alibi": {
+    calm: "My driver dropped me at home. He'd remember the time if you ask him.",
+    defensive: "You want a sworn statement from my doorman? Fine. I went home.",
+  },
+  "daniel-evidence": {
+    calm: "I left right after the meeting wrapped and was home well before nine.",
+    defensive: "I've already answered this. I left. I don't know what else you're looking for.",
+  },
+  "daniel-pressure": {
+    calm: "I'd tread carefully with accusations you can't yet support, Detective.",
+    defensive: "This conversation ends the moment my attorney isn't in the room.",
+  },
 };
 
-const CATEGORY_FALLBACK: Record<SuspectId, Record<QuestionCategory, ResponseVariant>> = {
+const CATEGORY_FALLBACK: Record<string, Record<QuestionCategory, ResponseVariant>> = {
   "lena-cross": {
     timeline: PRESET_RESPONSES["lena-timeline"],
     relationship: PRESET_RESPONSES["lena-relationship"],
@@ -117,18 +190,48 @@ const CATEGORY_FALLBACK: Record<SuspectId, Record<QuestionCategory, ResponseVari
     evidence: PRESET_RESPONSES["maya-evidence"],
     pressure: PRESET_RESPONSES["maya-pressure"],
   },
+  "marcus-webb": {
+    timeline: PRESET_RESPONSES["marcus-timeline"],
+    relationship: PRESET_RESPONSES["marcus-relationship"],
+    motive: PRESET_RESPONSES["marcus-motive"],
+    alibi: PRESET_RESPONSES["marcus-alibi"],
+    evidence: PRESET_RESPONSES["marcus-evidence"],
+    pressure: PRESET_RESPONSES["marcus-pressure"],
+  },
+  "priya-anand": {
+    timeline: PRESET_RESPONSES["priya-timeline"],
+    relationship: PRESET_RESPONSES["priya-relationship"],
+    motive: PRESET_RESPONSES["priya-motive"],
+    alibi: PRESET_RESPONSES["priya-alibi"],
+    evidence: PRESET_RESPONSES["priya-evidence"],
+    pressure: PRESET_RESPONSES["priya-pressure"],
+  },
+  "daniel-cho": {
+    timeline: PRESET_RESPONSES["daniel-timeline"],
+    relationship: PRESET_RESPONSES["daniel-relationship"],
+    motive: PRESET_RESPONSES["daniel-motive"],
+    alibi: PRESET_RESPONSES["daniel-alibi"],
+    evidence: PRESET_RESPONSES["daniel-evidence"],
+    pressure: PRESET_RESPONSES["daniel-pressure"],
+  },
 };
 
-const EVIDENCE_OTHER_RESPONSE: Record<SuspectId, string> = {
+const EVIDENCE_OTHER_RESPONSE: Record<string, string> = {
   "lena-cross": "I don't see how that involves me. You'll have to connect the dots yourself, Detective.",
   "adrian-shaw": "I'm not sure what you'd like me to say about that. It has nothing to do with me.",
   "maya-reed": "I don't know anything about that. I'm sorry, I wish I could help more.",
+  "marcus-webb": "I don't see how that involves me. You'll have to connect the dots yourself, Detective.",
+  "priya-anand": "I'm not sure what you'd like me to say about that. It has nothing to do with me.",
+  "daniel-cho": "I don't know anything about that. I wish I could help more, Detective.",
 };
 
-const CONTRADICTION_REPEAT_RESPONSE: Record<SuspectId, string> = {
+const CONTRADICTION_REPEAT_RESPONSE: Record<string, string> = {
   "lena-cross": "I already told you what happened in there. I'm not going to keep repeating myself.",
   "adrian-shaw": "We've been over this. I explained the ledger. I explained the car.",
   "maya-reed": "I already admitted what I heard. Please, can we move on?",
+  "marcus-webb": "I already told you what happened that night. I'm not going to keep repeating myself.",
+  "priya-anand": "We've been over this. I explained the dashboard. I explained coming back.",
+  "daniel-cho": "We've covered this already. I explained the badge. I explained the car.",
 };
 
 const KEYWORD_MAP: Record<QuestionCategory, string[]> = {
@@ -136,7 +239,10 @@ const KEYWORD_MAP: Record<QuestionCategory, string[]> = {
   relationship: ["relationship", "get along", "feel about", "trust", "close", "friend"],
   motive: ["why", "reason", "upset", "angry", "motive", "grudge", "conflict"],
   alibi: ["where were you", "alone", "confirm", "alibi", "prove", "anyone with you"],
-  evidence: ["ledger", "vendor", "ridgeline", "server", "badge", "audio", "note", "garage", "email", "stairwell", "recognize"],
+  evidence: [
+    "ledger", "vendor", "ridgeline", "server", "badge", "audio", "note", "garage", "email", "stairwell", "recognize",
+    "model", "nightfall", "leak", "dashboard", "metrics", "short", "advisor", "commit", "dm", "slack", "repo",
+  ],
   pressure: ["lying", "truth", "admit", "really", "honest", "confess"],
 };
 
@@ -155,7 +261,7 @@ function classifyCustomQuestion(text: string): QuestionCategory {
 }
 
 async function interviewSuspect(ctx: InterviewContext): Promise<InterviewResult> {
-  const suspect = getSuspectById(ctx.suspectId);
+  const suspect = getSuspect(ctx.caseId, ctx.suspectId);
   if (!suspect) {
     return {
       dialogue: "...",
@@ -170,8 +276,8 @@ async function interviewSuspect(ctx: InterviewContext): Promise<InterviewResult>
   const defensive = ctx.stress >= 50 || ctx.contradictionsFound.length > 0;
 
   if (ctx.presentedEvidenceId) {
-    const evidence = getEvidenceById(ctx.presentedEvidenceId);
-    const rule = getContradictionForEvidence(ctx.suspectId, ctx.presentedEvidenceId);
+    const evidence = getEvidence(ctx.caseId, ctx.presentedEvidenceId);
+    const rule = getContradiction(ctx.caseId, ctx.suspectId, ctx.presentedEvidenceId);
 
     if (rule) {
       const alreadyCaught = ctx.contradictionsFound.includes(rule.contradictionTag);
@@ -269,15 +375,18 @@ async function orionSummary(ctx: OrionSummaryContext): Promise<string> {
   return `${evidenceText} ${contradictionText} ${timelineText} Keep cross-referencing testimony against the case file, Detective — the pattern is there.`;
 }
 
+const HINT_BY_SUSPECT: Record<string, string> = {
+  "adrian-shaw": "Adrian's story about going straight home is worth testing against anything with a timestamp from that garage.",
+  "lena-cross": "Lena's badge tells a story independent of what she says out loud. Compare the two.",
+  "maya-reed": "Maya says the night was quiet. Audio evidence rarely agrees with 'quiet.'",
+  "marcus-webb": "Marcus insists he never left his desk. Check anything with a timestamp from outside the building.",
+  "priya-anand": "Priya says she went straight home. Building badges don't lie about re-entries.",
+  "daniel-cho": "Daniel's timeline has two separate holes — a badge and a parking still. Either one is worth presenting.",
+};
+
 async function orionHint(ctx: OrionHintContext): Promise<string> {
-  if (ctx.focusSuspectId === "adrian-shaw") {
-    return "Adrian's story about going straight home is worth testing against anything with a timestamp from that garage.";
-  }
-  if (ctx.focusSuspectId === "lena-cross") {
-    return "Lena's badge tells a story independent of what she says out loud. Compare the two.";
-  }
-  if (ctx.focusSuspectId === "maya-reed") {
-    return "Maya says the night was quiet. Audio evidence rarely agrees with 'quiet.'";
+  if (ctx.focusSuspectId && HINT_BY_SUSPECT[ctx.focusSuspectId]) {
+    return HINT_BY_SUSPECT[ctx.focusSuspectId];
   }
   if (ctx.contradictionsFound.length === 0) {
     return "Try presenting evidence directly to a suspect during interrogation — testimony and case files don't always agree.";
@@ -286,6 +395,16 @@ async function orionHint(ctx: OrionHintContext): Promise<string> {
 }
 
 async function endingSummary(ctx: EndingSummaryContext): Promise<string> {
+  if (ctx.caseId === "last-commit") {
+    if (ctx.correctSuspect && ctx.correctMotive) {
+      return `The case closes clean. ${ctx.accusedSuspectName} didn't expect an old advisor badge to outlive its welcome. Cipher Dynamics' board will spend months untangling the short positions — but the truth is on record now, Detective. That's grade ${ctx.gradeLabel} work.`;
+    }
+    if (ctx.correctSuspect) {
+      return `You named the right person — ${ctx.accusedSuspectName} — but the case you built had gaps a good defense attorney will find. It's a conviction on shaky ground. Grade ${ctx.gradeLabel}.`;
+    }
+    return `${ctx.accusedSuspectName} walks, and somewhere in Cipher Dynamics' repo history, the real story of that night stays buried in a commit nobody reopened. Grade ${ctx.gradeLabel}.`;
+  }
+
   if (ctx.correctSuspect && ctx.correctMotive) {
     return `The case closes clean. ${ctx.accusedSuspectName} didn't expect the ledger to talk louder than the alibi. Northstar's board will spend months untangling Ridgeline Consulting — but the truth is on record now, Detective. That's grade ${ctx.gradeLabel} work.`;
   }

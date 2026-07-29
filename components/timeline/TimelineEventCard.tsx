@@ -1,10 +1,15 @@
+"use client";
+
 import type { TimelineEvent } from "@/lib/game/types";
 import { GameBadge } from "@/components/ui/GameBadge";
-import { SUSPECTS } from "@/lib/game/suspects";
+import { getCase } from "@/lib/game/cases";
+import { useGameStore } from "@/hooks/useGameStore";
 import { cn } from "@/lib/utils";
 
 export function TimelineEventCard({ event, resolved }: { event: TimelineEvent; resolved: boolean }) {
-  const suspects = event.relatedSuspects.map((id) => SUSPECTS.find((s) => s.id === id)?.name).filter(Boolean);
+  const caseId = useGameStore((s) => s.progress.caseId);
+  const caseSuspects = getCase(caseId).suspects;
+  const suspects = event.relatedSuspects.map((id) => caseSuspects.find((s) => s.id === id)?.name).filter(Boolean);
 
   return (
     <div className="flex gap-4">

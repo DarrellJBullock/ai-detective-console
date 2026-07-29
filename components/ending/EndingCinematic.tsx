@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { GameCard } from "@/components/ui/GameCard";
 import { TypewriterText } from "@/components/ui/TypewriterText";
-import { SUSPECTS } from "@/lib/game/suspects";
+import { getCase } from "@/lib/game/cases";
 import type { DetectiveGrade } from "@/lib/game/types";
 import { useGameStore } from "@/hooks/useGameStore";
 
@@ -24,8 +24,9 @@ export function EndingCinematic({
   accusedSuspectId: string | null;
 }) {
   const settings = useGameStore((s) => s.settings);
+  const caseId = useGameStore((s) => s.progress.caseId);
   const [narration, setNarration] = useState<string | null>(null);
-  const accusedName = SUSPECTS.find((s) => s.id === accusedSuspectId)?.name ?? "no one";
+  const accusedName = getCase(caseId).suspects.find((s) => s.id === accusedSuspectId)?.name ?? "no one";
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +36,7 @@ export function EndingCinematic({
       body: JSON.stringify({
         type: "ending",
         mode: settings.aiMode,
+        caseId,
         correctSuspect: grade.breakdown.correctSuspect,
         correctMotive: grade.breakdown.correctMotive,
         gradeLabel: grade.grade,

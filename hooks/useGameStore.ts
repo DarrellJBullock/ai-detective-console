@@ -7,7 +7,6 @@ import type {
   DetectiveGrade,
   DialogueLine,
   EndingType,
-  EvidenceId,
   GameSettings,
   SuspectId,
 } from "@/lib/game/types";
@@ -22,7 +21,7 @@ import {
   writeSave,
   writeSettings,
 } from "@/lib/game/storage";
-import { EVIDENCE } from "@/lib/game/evidence";
+import { DEFAULT_CASE_ID, getCase } from "@/lib/game/cases";
 
 interface GameStore {
   settings: GameSettings;
@@ -32,7 +31,7 @@ interface GameStore {
   hasSave: boolean;
 
   hydrate: () => void;
-  startNewCase: () => void;
+  startNewCase: (caseId?: string) => void;
   continueCase: () => boolean;
   markBriefingViewed: () => void;
   unlockEvidenceForSuspect: (suspectId: SuspectId) => void;
@@ -77,8 +76,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  startNewCase: () => {
-    const progress = createInitialProgress();
+  startNewCase: (caseId = DEFAULT_CASE_ID) => {
+    const progress = createInitialProgress(caseId);
     set({ progress, hasSave: true });
     get().persist();
   },
@@ -102,8 +101,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   unlockEvidenceForSuspect: (suspectId) => {
     set((state) => {
+      const caseDef = getCase(state.progress.caseId);
       const nextUnlocked = { ...state.progress.evidenceUnlocked };
-      EVIDENCE.filter((e) => e.relatedSuspects.includes(suspectId)).forEach((e) => {
+      caseDef.evidence.filter((e) => e.relatedSuspects.includes(suspectId)).forEach((e) => {
         nextUnlocked[e.id] = true;
       });
       return {
@@ -206,7 +206,3 @@ export const useGameStore = create<GameStore>((set, get) => ({
     writeSave(progress, settings, lastMenuItem);
   },
 }));
-
-export function evidenceIdList(): EvidenceId[] {
-  return EVIDENCE.map((e) => e.id);
-}

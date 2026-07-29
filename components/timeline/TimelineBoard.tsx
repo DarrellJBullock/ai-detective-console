@@ -2,38 +2,43 @@
 
 import { useEffect, useMemo } from "react";
 import { useGameStore } from "@/hooks/useGameStore";
-import { TIMELINE_EVENTS } from "@/lib/game/timeline";
+import { getCase } from "@/lib/game/cases";
 import { TimelineEventCard } from "./TimelineEventCard";
 import { TimelineValidator } from "./TimelineValidator";
 import { OrionPanel } from "@/components/case/OrionPanel";
 
 export function TimelineBoard() {
+  const hydrated = useGameStore((s) => s.hydrated);
+  const caseId = useGameStore((s) => s.progress.caseId);
   const suspectStates = useGameStore((s) => s.progress.suspectStates);
   const timelineConfidence = useGameStore((s) => s.progress.timelineConfidence);
   const setTimelineConfidence = useGameStore((s) => s.setTimelineConfidence);
+  const timelineEvents = getCase(caseId).timeline;
 
   const allFoundTags = useMemo(
     () => new Set(Object.values(suspectStates).flatMap((s) => s.contradictionsFound)),
     [suspectStates]
   );
 
-  const contestedEvents = TIMELINE_EVENTS.filter((e) => e.contested);
+  const contestedEvents = timelineEvents.filter((e) => e.contested);
   const resolvedCount = contestedEvents.filter(
     (e) => e.resolvesWithTag && allFoundTags.has(e.resolvesWithTag)
   ).length;
 
   const confidence = Math.round(
-    ((TIMELINE_EVENTS.length - contestedEvents.length + resolvedCount) / TIMELINE_EVENTS.length) * 100
+    ((timelineEvents.length - contestedEvents.length + resolvedCount) / timelineEvents.length) * 100
   );
 
   useEffect(() => {
-    if (confidence !== timelineConfidence) {
+    // Wait for the store to finish loading from localStorage — acting before
+    // hydration completes would be overwritten the moment it does.
+    if (hydrated && confidence !== timelineConfidence) {
       setTimelineConfidence(confidence);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [confidence]);
+  }, [confidence, hydrated]);
 
-  const sorted = [...TIMELINE_EVENTS].sort((a, b) => a.sortKey - b.sortKey);
+  const sorted = [...timelineEvents].sort((a, b) => a.sortKey - b.sortKey);
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">

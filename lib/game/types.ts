@@ -1,18 +1,12 @@
 // Core domain types for AI Detective: Console Edition
+//
+// SuspectId and EvidenceId are plain strings (not per-case literal unions)
+// because the game supports multiple cases (see lib/game/cases/), each with
+// its own suspect and evidence ids. Uniqueness only needs to hold within a
+// single case's CaseDefinition, not across the whole game.
+export type SuspectId = string;
 
-export type SuspectId = "lena-cross" | "adrian-shaw" | "maya-reed";
-
-export type EvidenceId =
-  | "security-badge-log"
-  | "server-room-access-record"
-  | "broken-glass"
-  | "encrypted-finance-ledger"
-  | "deleted-email-thread"
-  | "coffee-cup-lipstick"
-  | "parking-garage-still"
-  | "stairwell-audio-transcript"
-  | "final-note"
-  | "ai-project-access-logs";
+export type EvidenceId = string;
 
 export type EvidenceCategory =
   | "digital"
@@ -169,4 +163,55 @@ export interface SaveFile {
   progress: CaseProgress;
   settings: GameSettings;
   lastMenuItem: string | null;
+}
+
+// ---------------------------------------------------------------------- //
+// Multi-case support
+// ---------------------------------------------------------------------- //
+
+export interface Victim {
+  name: string;
+  role: string;
+  age: number;
+  causeOfDeath: string;
+  timeOfDeath: string;
+}
+
+export interface CaseMeta {
+  id: string;
+  title: string;
+  tagline: string;
+  difficulty: "standard" | "advanced";
+  victim: Victim;
+  premise: string;
+  crimeSceneSummary: string;
+  knownFacts: string[];
+  initialEvidenceIds: EvidenceId[];
+  orionBriefing: string;
+}
+
+export interface MotiveOption {
+  id: string;
+  label: string;
+  suspectId: SuspectId;
+}
+
+export interface TimelineExplanationOption {
+  id: string;
+  label: string;
+  correct: boolean;
+}
+
+export interface CaseDefinition {
+  meta: CaseMeta;
+  suspects: SuspectProfile[];
+  evidence: Evidence[];
+  timeline: TimelineEvent[];
+  contradictions: ContradictionRule[];
+  motiveOptions: MotiveOption[];
+  requiredEvidenceIds: EvidenceId[];
+  supportingEvidenceIds: EvidenceId[];
+  timelineExplanationOptions: TimelineExplanationOption[];
+  correctSuspectId: SuspectId;
+  correctMotiveId: string;
 }

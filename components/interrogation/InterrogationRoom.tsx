@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ContradictionRule, EvidenceId, PresetQuestion, SuspectProfile } from "@/lib/game/types";
+import type { ContradictionRule, EvidenceId, PresetQuestion } from "@/lib/game/types";
 import type { InterviewResult } from "@/lib/ai/aiProvider";
 import { useGameStore } from "@/hooks/useGameStore";
-import { getEvidenceById } from "@/lib/game/evidence";
+import { getCase, getEvidence, getSuspect } from "@/lib/game/cases";
 import { makeId } from "@/lib/utils";
 import { GameCard } from "@/components/ui/GameCard";
 import { GameButton } from "@/components/ui/GameButton";
@@ -18,9 +18,11 @@ import { TruthMeter } from "./TruthMeter";
 import { ContradictionAlert } from "./ContradictionAlert";
 import { OrionPanel } from "@/components/case/OrionPanel";
 
-export function InterrogationRoom({ suspect }: { suspect: SuspectProfile }) {
+export function InterrogationRoom({ suspectId }: { suspectId: string }) {
   const router = useRouter();
-  const state = useGameStore((s) => s.progress.suspectStates[suspect.id]);
+  const caseId = useGameStore((s) => s.progress.caseId);
+  const suspect = getSuspect(caseId, suspectId);
+  const state = useGameStore((s) => s.progress.suspectStates[suspectId]);
   const settings = useGameStore((s) => s.settings);
   const recordInterviewExchange = useGameStore((s) => s.recordInterviewExchange);
   const evidenceUnlocked = useGameStore((s) => s.progress.evidenceUnlocked);
@@ -38,6 +40,7 @@ export function InterrogationRoom({ suspect }: { suspect: SuspectProfile }) {
     questionText: string;
     presentedEvidenceId?: EvidenceId;
   }) {
+    if (!suspect || !state) return;
     setLoading(true);
     try {
       const res = await fetch("/api/ai/interview", {
@@ -45,6 +48,7 @@ export function InterrogationRoom({ suspect }: { suspect: SuspectProfile }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: settings.aiMode,
+          caseId,
           suspectId: suspect.id,
           category: payload.category,
           presetQuestionId: payload.presetQuestionId,
@@ -94,13 +98,22 @@ export function InterrogationRoom({ suspect }: { suspect: SuspectProfile }) {
   const handleAskCustom = (text: string) => submitInteraction({ category: "custom", questionText: text });
 
   const handlePresentEvidence = (evidenceId: EvidenceId) => {
-    const evidence = getEvidenceById(evidenceId);
+    const evidence = getEvidence(caseId, evidenceId);
     submitInteraction({
       category: "evidence",
       questionText: `[Presents evidence: ${evidence?.title ?? evidenceId}]`,
       presentedEvidenceId: evidenceId,
     });
   };
+
+  if (!suspect || !state) {
+    return (
+      <GameCard className="mx-auto max-w-md text-center">
+        <p className="mb-4 text-sm text-fog">That suspect isn&apos;t part of {getCase(caseId).meta.title}.</p>
+        <GameButton onClick={() => router.push("/case/board")}>Back to Case Board</GameButton>
+      </GameCard>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -124,7 +137,11 @@ export function InterrogationRoom({ suspect }: { suspect: SuspectProfile }) {
                 <p className="text-xs text-fog">{suspect.role} &middot; Interrogation Room</p>
               </div>
             </div>
-            <GameButton variant="ghost" size="sm" onClick={() => router.push(`/case/suspects/${suspect.id}`)}>
+            <GameButton
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/case/suspects/${suspect.id}`)}
+            >
               Exit
             </GameButton>
           </div>

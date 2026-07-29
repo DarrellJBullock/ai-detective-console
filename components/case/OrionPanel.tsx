@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useGameStore } from "@/hooks/useGameStore";
 import { GameCard } from "@/components/ui/GameCard";
 import { GameButton } from "@/components/ui/GameButton";
-import { EVIDENCE } from "@/lib/game/evidence";
+import { getCase } from "@/lib/game/cases";
 import type { SuspectId } from "@/lib/game/types";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +22,8 @@ export function OrionPanel({ variant, focusSuspectId, className }: OrionPanelPro
   const [loading, setLoading] = useState(false);
   const [glitch, setGlitch] = useState(false);
 
-  const unlockedEvidenceTitles = EVIDENCE.filter((e) => progress.evidenceUnlocked[e.id]).map(
+  const caseDef = getCase(progress.caseId);
+  const unlockedEvidenceTitles = caseDef.evidence.filter((e) => progress.evidenceUnlocked[e.id]).map(
     (e) => e.title
   );
   const contradictionsFound = Object.values(progress.suspectStates).flatMap(
@@ -38,6 +39,7 @@ export function OrionPanel({ variant, focusSuspectId, className }: OrionPanelPro
         body: JSON.stringify({
           type,
           mode: settings.aiMode,
+          caseId: progress.caseId,
           caseProgressSummary: "",
           unlockedEvidenceTitles,
           contradictionsFound,

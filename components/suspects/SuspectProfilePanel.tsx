@@ -2,26 +2,39 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { SuspectProfile } from "@/lib/game/types";
 import { useGameStore } from "@/hooks/useGameStore";
+import { getCase, getSuspect } from "@/lib/game/cases";
 import { GameCard } from "@/components/ui/GameCard";
 import { GameButton } from "@/components/ui/GameButton";
 import { GameBadge } from "@/components/ui/GameBadge";
 import { StressMeter } from "./StressMeter";
 import { TrustMeter } from "./TrustMeter";
-import { EVIDENCE } from "@/lib/game/evidence";
 
-export function SuspectProfilePanel({ suspect }: { suspect: SuspectProfile }) {
+export function SuspectProfilePanel({ suspectId }: { suspectId: string }) {
   const router = useRouter();
-  const state = useGameStore((s) => s.progress.suspectStates[suspect.id]);
+  const hydrated = useGameStore((s) => s.hydrated);
+  const caseId = useGameStore((s) => s.progress.caseId);
+  const suspect = getSuspect(caseId, suspectId);
+  const state = useGameStore((s) => s.progress.suspectStates[suspectId]);
   const evidenceUnlocked = useGameStore((s) => s.progress.evidenceUnlocked);
   const unlockEvidenceForSuspect = useGameStore((s) => s.unlockEvidenceForSuspect);
 
   useEffect(() => {
-    unlockEvidenceForSuspect(suspect.id);
-  }, [suspect.id, unlockEvidenceForSuspect]);
+    // Wait for the store to finish loading from localStorage — acting before
+    // hydration completes would be overwritten the moment it does.
+    if (hydrated && suspect) unlockEvidenceForSuspect(suspectId);
+  }, [suspectId, suspect, hydrated, unlockEvidenceForSuspect]);
 
-  const relatedEvidence = EVIDENCE.filter((e) => e.relatedSuspects.includes(suspect.id));
+  if (!suspect || !state) {
+    return (
+      <GameCard className="mx-auto max-w-md text-center">
+        <p className="mb-4 text-sm text-fog">That suspect isn&apos;t part of {getCase(caseId).meta.title}.</p>
+        <GameButton onClick={() => router.push("/case/board")}>Back to Case Board</GameButton>
+      </GameCard>
+    );
+  }
+
+  const relatedEvidence = getCase(caseId).evidence.filter((e) => e.relatedSuspects.includes(suspectId));
 
   return (
     <div className="flex flex-col gap-6">

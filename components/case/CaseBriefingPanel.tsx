@@ -6,13 +6,15 @@ import { GameButton } from "@/components/ui/GameButton";
 import { TypewriterText } from "@/components/ui/TypewriterText";
 import { VictimProfile } from "./VictimProfile";
 import { SuspectCard } from "@/components/suspects/SuspectCard";
-import { SUSPECTS } from "@/lib/game/suspects";
-import { CASE_META } from "@/lib/game/caseData";
+import { getCase } from "@/lib/game/cases";
 import { useGameStore } from "@/hooks/useGameStore";
 
 export function CaseBriefingPanel() {
   const router = useRouter();
   const markBriefingViewed = useGameStore((s) => s.markBriefingViewed);
+  const caseId = useGameStore((s) => s.progress.caseId);
+  const caseDef = getCase(caseId);
+  const { meta, suspects } = caseDef;
 
   return (
     <div className="flex flex-col gap-6">
@@ -20,24 +22,24 @@ export function CaseBriefingPanel() {
         <p className="font-mono mb-2 text-[11px] uppercase tracking-widest text-cyan-signal">
           ORION &middot; Case Briefing
         </p>
-        <TypewriterText text={CASE_META.orionBriefing} className="text-sm leading-relaxed text-paper-dim" />
+        <TypewriterText text={meta.orionBriefing} className="text-sm leading-relaxed text-paper-dim" />
       </GameCard>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <VictimProfile />
+        <VictimProfile victim={meta.victim} />
 
         <GameCard>
           <p className="font-mono mb-2 text-[11px] uppercase tracking-widest text-amber">
             Crime Scene Summary
           </p>
-          <p className="text-sm leading-relaxed text-paper-dim">{CASE_META.crimeSceneSummary}</p>
+          <p className="text-sm leading-relaxed text-paper-dim">{meta.crimeSceneSummary}</p>
         </GameCard>
       </div>
 
       <GameCard>
         <p className="font-mono mb-3 text-[11px] uppercase tracking-widest text-amber">Known Facts</p>
         <ul className="flex flex-col gap-2">
-          {CASE_META.knownFacts.map((fact, i) => (
+          {meta.knownFacts.map((fact, i) => (
             <li key={i} className="flex gap-3 text-sm text-paper-dim">
               <span className="font-mono text-red-string">&middot;</span>
               {fact}
@@ -51,7 +53,7 @@ export function CaseBriefingPanel() {
           Suspect Preview
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
-          {SUSPECTS.map((s) => (
+          {suspects.map((s) => (
             <SuspectCard key={s.id} suspect={s} />
           ))}
         </div>

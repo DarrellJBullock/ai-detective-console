@@ -7,6 +7,7 @@ import type {
 import type { ContradictionRule } from "@/lib/game/types";
 
 export interface InterviewContext {
+  caseId: string;
   suspectId: SuspectId;
   category: QuestionCategory | "custom";
   presetQuestionId?: string;
@@ -40,6 +41,7 @@ export interface OrionSummaryContext {
 }
 
 export interface OrionHintContext {
+  caseId: string;
   caseProgressSummary: string;
   unlockedEvidenceTitles: string[];
   contradictionsFound: string[];
@@ -47,6 +49,7 @@ export interface OrionHintContext {
 }
 
 export interface EndingSummaryContext {
+  caseId: string;
   correctSuspect: boolean;
   correctMotive: boolean;
   gradeLabel: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useGameStore } from "@/hooks/useGameStore";
-import { EVIDENCE } from "@/lib/game/evidence";
+import { getCase } from "@/lib/game/cases";
 import { cn } from "@/lib/utils";
 import type { EvidenceId } from "@/lib/game/types";
 
@@ -12,8 +12,9 @@ export function EvidencePresenter({
   onPresent: (evidenceId: EvidenceId) => void;
   disabled?: boolean;
 }) {
+  const caseId = useGameStore((s) => s.progress.caseId);
   const evidenceUnlocked = useGameStore((s) => s.progress.evidenceUnlocked);
-  const unlockedEvidence = EVIDENCE.filter((e) => evidenceUnlocked[e.id]);
+  const unlockedEvidence = getCase(caseId).evidence.filter((e) => evidenceUnlocked[e.id]);
 
   if (unlockedEvidence.length === 0) {
     return <p className="font-mono text-xs text-fog">No evidence unlocked yet.</p>;

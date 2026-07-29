@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useGameStore } from "@/hooks/useGameStore";
-import { EVIDENCE } from "@/lib/game/evidence";
+import { getCase } from "@/lib/game/cases";
 import type { Evidence, EvidenceCategory } from "@/lib/game/types";
 import { Tabs } from "@/components/ui/Tabs";
 import { EvidenceCard } from "./EvidenceCard";
@@ -18,19 +18,21 @@ const CATEGORY_TABS: { id: EvidenceCategory | "all"; label: string }[] = [
 ];
 
 export function EvidenceInventory() {
+  const caseId = useGameStore((s) => s.progress.caseId);
   const evidenceUnlocked = useGameStore((s) => s.progress.evidenceUnlocked);
+  const evidenceList = getCase(caseId).evidence;
   const [category, setCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Evidence | null>(null);
 
   const filtered = useMemo(() => {
-    return EVIDENCE.filter((e) => {
+    return evidenceList.filter((e) => {
       const matchesCategory = category === "all" || e.category === category;
       const matchesQuery =
         query.trim().length === 0 || e.title.toLowerCase().includes(query.trim().toLowerCase());
       return matchesCategory && matchesQuery;
     });
-  }, [category, query]);
+  }, [evidenceList, category, query]);
 
   const unlockedCount = Object.values(evidenceUnlocked).filter(Boolean).length;
 
@@ -39,7 +41,7 @@ export function EvidenceInventory() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Tabs items={CATEGORY_TABS} activeId={category} onChange={setCategory} />
         <div className="flex items-center gap-3">
-          <span className="font-mono text-xs text-fog">{unlockedCount} / {EVIDENCE.length} unlocked</span>
+          <span className="font-mono text-xs text-fog">{unlockedCount} / {evidenceList.length} unlocked</span>
           <input
             type="search"
             value={query}

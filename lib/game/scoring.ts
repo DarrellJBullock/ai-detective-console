@@ -1,15 +1,15 @@
-import { CORRECT_SUSPECT_ID, CORRECT_MOTIVE_ID, REQUIRED_EVIDENCE_IDS } from "./caseData";
-import { CONTRADICTION_RULES } from "./contradictions";
+import { getCase } from "./cases";
 import type { Accusation, CaseProgress, DetectiveGrade, EndingType } from "./types";
 
 export function scoreAccusation(
   accusation: Accusation,
   progress: CaseProgress
 ): DetectiveGrade {
-  const correctSuspect = accusation.suspectId === CORRECT_SUSPECT_ID;
-  const correctMotive = accusation.motiveId === CORRECT_MOTIVE_ID;
+  const caseDef = getCase(progress.caseId);
+  const correctSuspect = accusation.suspectId === caseDef.correctSuspectId;
+  const correctMotive = accusation.motiveId === caseDef.correctMotiveId;
 
-  const requiredFound = REQUIRED_EVIDENCE_IDS.filter((id) =>
+  const requiredFound = caseDef.requiredEvidenceIds.filter((id) =>
     accusation.evidenceIds.includes(id)
   ).length;
 
@@ -17,23 +17,23 @@ export function scoreAccusation(
     (sum, s) => sum + s.contradictionsFound.length,
     0
   );
-  const contradictionsTotal = CONTRADICTION_RULES.length;
+  const contradictionsTotal = caseDef.contradictions.length;
 
   const hintsUsed = progress.hintCount;
 
   let score = 0;
   if (correctSuspect) score += 40;
   if (correctMotive) score += 15;
-  score += Math.round((requiredFound / REQUIRED_EVIDENCE_IDS.length) * 25);
+  score += Math.round((requiredFound / caseDef.requiredEvidenceIds.length) * 25);
   score += Math.round((contradictionsResolved / contradictionsTotal) * 15);
   score += Math.round((progress.timelineConfidence / 100) * 5);
   score -= Math.min(hintsUsed * 3, 15);
   score = Math.max(0, Math.min(100, score));
 
   let grade: DetectiveGrade["grade"];
-  if (correctSuspect && correctMotive && requiredFound === REQUIRED_EVIDENCE_IDS.length && score >= 85) {
+  if (correctSuspect && correctMotive && requiredFound === caseDef.requiredEvidenceIds.length && score >= 85) {
     grade = "S";
-  } else if (correctSuspect && correctMotive && requiredFound >= REQUIRED_EVIDENCE_IDS.length - 1) {
+  } else if (correctSuspect && correctMotive && requiredFound >= caseDef.requiredEvidenceIds.length - 1) {
     grade = "A";
   } else if (correctSuspect) {
     grade = "B";
@@ -50,7 +50,7 @@ export function scoreAccusation(
       correctSuspect,
       correctMotive,
       requiredEvidenceFound: requiredFound,
-      requiredEvidenceTotal: REQUIRED_EVIDENCE_IDS.length,
+      requiredEvidenceTotal: caseDef.requiredEvidenceIds.length,
       contradictionsResolved,
       contradictionsTotal,
       timelineConfidence: progress.timelineConfidence,

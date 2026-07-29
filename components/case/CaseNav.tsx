@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SaveIndicator } from "@/components/ui/SaveIndicator";
-import { CASE_META } from "@/lib/game/caseData";
+import { useGameStore } from "@/hooks/useGameStore";
+import { getCase } from "@/lib/game/cases";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -16,12 +17,14 @@ const NAV_ITEMS = [
 
 export function CaseNav() {
   const pathname = usePathname();
+  const caseId = useGameStore((s) => s.progress.caseId);
+  const title = getCase(caseId).meta.title;
 
   return (
     <header className="sticky top-0 z-30 border-b border-steel bg-ink/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-8">
         <Link href="/" className="font-display text-sm tracking-wide text-paper hover:text-red-string">
-          {CASE_META.title}
+          {title}
         </Link>
         <nav aria-label="Case navigation" className="flex flex-wrap gap-1">
           {NAV_ITEMS.map((item) => {

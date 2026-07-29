@@ -1,10 +1,9 @@
-import type { SuspectProfile } from "@/lib/game/types";
+import type { CaseMeta, SuspectProfile } from "@/lib/game/types";
 import type { InterviewContext } from "./aiProvider";
-import { CASE_META } from "@/lib/game/caseData";
-import { getEvidenceById } from "@/lib/game/evidence";
+import { getEvidence } from "@/lib/game/cases";
 
-export function suspectInterviewSystemPrompt(suspect: SuspectProfile): string {
-  return `You are roleplaying ${suspect.name}, the ${suspect.role} at Northstar Systems, being interviewed by a detective investigating the murder of CFO Marcus Vale ("${CASE_META.title}").
+export function suspectInterviewSystemPrompt(suspect: SuspectProfile, caseMeta: CaseMeta): string {
+  return `You are roleplaying ${suspect.name}, the ${suspect.role}, being interviewed by a detective investigating the death of ${caseMeta.victim.name} ("${caseMeta.title}").
 
 CHARACTER
 - Personality: ${suspect.personality}
@@ -23,15 +22,15 @@ RULES
 - Keep responses to 2-4 sentences, conversational, not expository.`;
 }
 
-export function suspectInterviewUserPrompt(ctx: InterviewContext): string {
-  const evidence = ctx.presentedEvidenceId ? getEvidenceById(ctx.presentedEvidenceId) : undefined;
+export function suspectInterviewUserPrompt(ctx: InterviewContext, caseMeta: CaseMeta): string {
+  const evidence = ctx.presentedEvidenceId ? getEvidence(ctx.caseId, ctx.presentedEvidenceId) : undefined;
   const historyText = ctx.conversationHistory
     .slice(-6)
     .map((line) => `${line.speaker}: ${line.text}`)
     .join("\n");
 
   return `CASE CONTEXT
-${CASE_META.crimeSceneSummary}
+${caseMeta.crimeSceneSummary}
 
 CONVERSATION SO FAR
 ${historyText || "(interview just beginning)"}

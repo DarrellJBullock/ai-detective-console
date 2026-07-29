@@ -1,6 +1,4 @@
-import { getSuspectById } from "@/lib/game/suspects";
-import { getContradictionForEvidence } from "@/lib/game/contradictions";
-import { getEvidenceById } from "@/lib/game/evidence";
+import { getSuspect, getContradiction, getEvidence, getCase } from "@/lib/game/cases";
 import {
   contradictionResponsePrompt,
   endingSummaryPrompt,
@@ -68,16 +66,17 @@ async function callClaude(system: string, user: string): Promise<string> {
 
 function buildProvider(mode: "openai" | "claude", chat: ChatCall): AIProvider {
   async function interviewSuspect(ctx: InterviewContext): Promise<InterviewResult> {
-    const suspect = getSuspectById(ctx.suspectId);
+    const suspect = getSuspect(ctx.caseId, ctx.suspectId);
     if (!suspect) return mockProvider.interviewSuspect(ctx);
+    const caseMeta = getCase(ctx.caseId).meta;
 
     try {
-      const system = suspectInterviewSystemPrompt(suspect);
+      const system = suspectInterviewSystemPrompt(suspect, caseMeta);
 
       if (ctx.presentedEvidenceId) {
-        const evidence = getEvidenceById(ctx.presentedEvidenceId);
-        const rule = getContradictionForEvidence(ctx.suspectId, ctx.presentedEvidenceId);
-        const base = suspectInterviewUserPrompt(ctx);
+        const evidence = getEvidence(ctx.caseId, ctx.presentedEvidenceId);
+        const rule = getContradiction(ctx.caseId, ctx.suspectId, ctx.presentedEvidenceId);
+        const base = suspectInterviewUserPrompt(ctx, caseMeta);
         const note = rule
           ? contradictionResponsePrompt(rule.claimText, rule.proofText)
           : evidencePresentationNote(evidence?.title ?? "evidence");
@@ -104,7 +103,7 @@ function buildProvider(mode: "openai" | "claude", chat: ChatCall): AIProvider {
         };
       }
 
-      const user = suspectInterviewUserPrompt(ctx);
+      const user = suspectInterviewUserPrompt(ctx, caseMeta);
       const dialogue = await chat(system, user);
       const isPressure = ctx.category === "pressure";
       return {

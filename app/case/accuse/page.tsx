@@ -8,9 +8,7 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { GameCard } from "@/components/ui/GameCard";
 import { GameButton } from "@/components/ui/GameButton";
 import { Modal } from "@/components/ui/Modal";
-import { SUSPECTS } from "@/lib/game/suspects";
-import { EVIDENCE } from "@/lib/game/evidence";
-import { MOTIVE_OPTIONS, TIMELINE_EXPLANATION_OPTIONS } from "@/lib/game/caseData";
+import { getCase } from "@/lib/game/cases";
 import { useGameStore } from "@/hooks/useGameStore";
 import { scoreAccusation, determineEnding } from "@/lib/game/scoring";
 import type { EvidenceId, SuspectId } from "@/lib/game/types";
@@ -30,7 +28,8 @@ export default function AccusePage() {
   );
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const unlockedEvidence = EVIDENCE.filter((e) => progress.evidenceUnlocked[e.id]);
+  const caseDef = getCase(progress.caseId);
+  const unlockedEvidence = caseDef.evidence.filter((e) => progress.evidenceUnlocked[e.id]);
   const canSubmit = suspectId && motiveId && timelineExplanationId && evidenceIds.length > 0;
 
   const toggleEvidence = (id: EvidenceId) => {
@@ -68,7 +67,7 @@ export default function AccusePage() {
                 1. Select Suspect
               </p>
               <div className="grid gap-3 sm:grid-cols-3">
-                {SUSPECTS.map((s) => (
+                {caseDef.suspects.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => setSuspectId(s.id)}
@@ -90,7 +89,7 @@ export default function AccusePage() {
                 2. Select Motive
               </p>
               <div className="flex flex-col gap-2">
-                {MOTIVE_OPTIONS.map((m) => (
+                {caseDef.motiveOptions.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => setMotiveId(m.id)}
@@ -134,7 +133,7 @@ export default function AccusePage() {
                 4. Select Timeline Explanation
               </p>
               <div className="flex flex-col gap-2">
-                {TIMELINE_EXPLANATION_OPTIONS.map((t) => (
+                {caseDef.timelineExplanationOptions.map((t) => (
                   <button
                     key={t.id}
                     onClick={() => setTimelineExplanationId(t.id)}

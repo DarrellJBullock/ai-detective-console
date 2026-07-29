@@ -1,8 +1,7 @@
 import { GameCard } from "@/components/ui/GameCard";
-import { CASE_META } from "@/lib/game/caseData";
+import type { Victim } from "@/lib/game/types";
 
-export function VictimProfile() {
-  const { victim } = CASE_META;
+export function VictimProfile({ victim }: { victim: Victim }) {
   return (
     <GameCard>
       <p className="font-mono mb-2 text-[11px] uppercase tracking-widest text-red-string">Victim</p>
