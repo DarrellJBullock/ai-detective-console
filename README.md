@@ -10,7 +10,13 @@ Built as a portfolio project to demonstrate a full game loop, an LLM-ready AI ar
 
 ## Screenshots
 
-_Add screenshots/GIFs here: Home menu, Case Board (red string), Interrogation Room (question wheel), Ending screen._
+| | |
+|---|---|
+| ![Home menu](docs/screenshots/home.png) | ![Case briefing](docs/screenshots/briefing.png) |
+| ![Case board with red string](docs/screenshots/board.png) | ![Interrogation room, question wheel](docs/screenshots/interrogation.png) |
+| ![Contradiction caught](docs/screenshots/contradiction.png) | ![Timeline reconstruction](docs/screenshots/timeline.png) |
+
+![Ending screen, detective grade](docs/screenshots/ending.png)
 
 ## Game Concept
 
