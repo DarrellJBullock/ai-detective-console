@@ -10,6 +10,8 @@ Built as a portfolio project to demonstrate a full game loop, a multi-case conte
 
 ## Screenshots
 
+**The Midnight Ledger**
+
 | | |
 |---|---|
 | ![Home menu](docs/screenshots/home.png) | ![Case briefing](docs/screenshots/briefing.png) |
@@ -17,6 +19,14 @@ Built as a portfolio project to demonstrate a full game loop, a multi-case conte
 | ![Contradiction caught](docs/screenshots/contradiction.png) | ![Timeline reconstruction](docs/screenshots/timeline.png) |
 
 ![Ending screen, detective grade](docs/screenshots/ending.png)
+
+**The Last Commit**
+
+| | |
+|---|---|
+| ![Case briefing for The Last Commit](docs/screenshots/case2-briefing.png) | ![Case board with red string for The Last Commit](docs/screenshots/case2-board.png) |
+
+![Contradiction caught, interrogating Daniel Cho](docs/screenshots/case2-contradiction.png)
 
 ## Game Concept
 
