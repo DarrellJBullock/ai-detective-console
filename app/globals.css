@@ -106,8 +106,13 @@ body {
   border-radius: 2px;
 }
 
-.console-focus {
-  position: relative;
+/* Layered as "components" (lower priority than Tailwind's "utilities" layer)
+   so a Tailwind position utility (e.g. absolute) on the same element always
+   wins instead of this unlayered rule beating it regardless of specificity. */
+@layer components {
+  .console-focus {
+    position: relative;
+  }
 }
 .console-focus:focus-visible {
   outline: none;

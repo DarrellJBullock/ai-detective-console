@@ -29,7 +29,10 @@ export function Tabs({ items, activeId, onChange, className }: TabsProps) {
   };
 
   return (
-    <div role="tablist" className={cn("flex gap-1 border-b border-steel", className)}>
+    <div
+      role="tablist"
+      className={cn("flex min-w-0 gap-1 overflow-x-auto border-b border-steel", className)}
+    >
       {items.map((item, index) => {
         const active = item.id === activeId;
         return (
@@ -44,7 +47,7 @@ export function Tabs({ items, activeId, onChange, className }: TabsProps) {
             onClick={() => onChange(item.id)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={cn(
-              "console-focus font-display px-4 py-2 text-sm tracking-wide transition-colors",
+              "console-focus font-display shrink-0 px-4 py-2 text-sm tracking-wide transition-colors",
               active ? "border-b-2 border-red-string text-paper" : "border-b-2 border-transparent text-fog hover:text-paper"
             )}
           >

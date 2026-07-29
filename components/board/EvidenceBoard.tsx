@@ -67,7 +67,7 @@ export function EvidenceBoard() {
   }, [progress.suspectStates, progress.caseId]);
 
   return (
-    <div ref={containerRef} className="relative flex flex-col gap-8">
+    <div ref={containerRef} className="relative flex min-w-0 flex-col gap-8">
       <RedStringLayer connections={connections} />
 
       <section>
@@ -84,7 +84,7 @@ export function EvidenceBoard() {
         </div>
       </section>
 
-      <section>
+      <section className="min-w-0">
         <h2 className="font-display mb-3 text-sm text-amber">Timeline Preview</h2>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {caseDef.timeline.map((event) => (
