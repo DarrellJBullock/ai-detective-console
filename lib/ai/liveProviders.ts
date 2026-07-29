@@ -38,7 +38,10 @@ async function callOpenAI(system: string, user: string): Promise<string> {
       max_tokens: 200,
     }),
   });
-  if (!response.ok) throw new Error(`OpenAI request failed: ${response.status}`);
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`OpenAI request failed: ${response.status} ${body}`);
+  }
   const data = await response.json();
   return data.choices?.[0]?.message?.content?.trim() ?? "";
 }
@@ -53,13 +56,16 @@ async function callClaude(system: string, user: string): Promise<string> {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-3-5-haiku-latest",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 300,
       system,
       messages: [{ role: "user", content: user }],
     }),
   });
-  if (!response.ok) throw new Error(`Anthropic request failed: ${response.status}`);
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Anthropic request failed: ${response.status} ${body}`);
+  }
   const data = await response.json();
   return data.content?.[0]?.text?.trim() ?? "";
 }
@@ -114,7 +120,8 @@ function buildProvider(mode: "openai" | "claude", chat: ChatCall): AIProvider {
         truthDelta: 0,
         cooperative: true,
       };
-    } catch {
+    } catch (error) {
+      console.error(`[ai:${mode}] interviewSuspect failed, using mock fallback:`, error);
       const fallback = await mockProvider.interviewSuspect(ctx);
       return { ...fallback, providerNote: `Live ${mode} call failed — used mock fallback.` };
     }
@@ -127,7 +134,8 @@ function buildProvider(mode: "openai" | "claude", chat: ChatCall): AIProvider {
       );
       const text = await chat("You are ORION, a detective AI partner.", prompt);
       return text || (await mockProvider.orionSummary(ctx));
-    } catch {
+    } catch (error) {
+      console.error(`[ai:${mode}] orionSummary failed, using mock fallback:`, error);
       return mockProvider.orionSummary(ctx);
     }
   }
@@ -140,7 +148,8 @@ function buildProvider(mode: "openai" | "claude", chat: ChatCall): AIProvider {
       );
       const text = await chat("You are ORION, a detective AI partner.", prompt);
       return text || (await mockProvider.orionHint(ctx));
-    } catch {
+    } catch (error) {
+      console.error(`[ai:${mode}] orionHint failed, using mock fallback:`, error);
       return mockProvider.orionHint(ctx);
     }
   }
@@ -150,7 +159,8 @@ function buildProvider(mode: "openai" | "claude", chat: ChatCall): AIProvider {
       const prompt = endingSummaryPrompt(ctx.correctSuspect, ctx.gradeLabel, ctx.accusedSuspectName);
       const text = await chat("You are ORION, a detective AI partner narrating a case close.", prompt);
       return text || (await mockProvider.endingSummary(ctx));
-    } catch {
+    } catch (error) {
+      console.error(`[ai:${mode}] endingSummary failed, using mock fallback:`, error);
       return mockProvider.endingSummary(ctx);
     }
   }
